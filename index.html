@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LEDGER — Enhanced Cooperative Finance</title>
+<title>LEDGER  Cooperative Finance</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -800,37 +800,7 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 
 // ─── DEFAULT SEED DATA ────────────────────────────────────────
-const DEFAULT_MEMBERS = [
-  { id:1, code:'MEM-0001', name:'Adaeze Okonkwo', phone:'+234 801 234 5678', email:'adaeze@mail.com', status:'active', joined:'2023-01-15', photo:null },
-  { id:2, code:'MEM-0002', name:'Emeka Nwosu', phone:'+234 802 345 6789', email:'emeka@mail.com', status:'active', joined:'2023-01-15', photo:null },
-  { id:3, code:'MEM-0003', name:'Fatima Aliyu', phone:'+234 803 456 7890', email:'fatima@mail.com', status:'active', joined:'2023-02-01', photo:null },
-  { id:4, code:'MEM-0004', name:'Chukwuemeka Eze', phone:'+234 804 567 8901', email:'chukwu@mail.com', status:'active', joined:'2023-02-14', photo:null },
-  { id:5, code:'MEM-0005', name:'Ngozi Obi', phone:'+234 805 678 9012', email:'ngozi@mail.com', status:'inactive', joined:'2023-03-01', photo:null },
-  { id:6, code:'MEM-0006', name:'Babatunde Lawal', phone:'+234 806 789 0123', email:'tunde@mail.com', status:'active', joined:'2023-03-10', photo:null },
-  { id:7, code:'MEM-0007', name:'Amina Mohammed', phone:'+234 807 890 1234', email:'amina@mail.com', status:'active', joined:'2023-04-05', photo:null },
-  { id:8, code:'MEM-0008', name:'Olusegun Adeleke', phone:'+234 808 901 2345', email:'segun@mail.com', status:'suspended', joined:'2023-04-20', photo:null },
-  { id:9, code:'MEM-0009', name:'Chidinma Okeke', phone:'+234 809 012 3456', email:'chidi@mail.com', status:'active', joined:'2023-05-01', photo:null },
-];
 
-const DEFAULT_TRANSACTIONS = [
-  { id:1, ref:'TX-2025-001', memberId:1, type:'contribution', amount:5000, period:'January 2025', note:'', date:'2025-01-05' },
-  { id:2, ref:'TX-2025-002', memberId:2, type:'contribution', amount:5000, period:'January 2025', note:'', date:'2025-01-05' },
-  { id:3, ref:'TX-2025-003', memberId:3, type:'loan', amount:150000, period:'January 2025', note:'Business loan', date:'2025-01-10' },
-  { id:4, ref:'TX-2025-004', memberId:1, type:'contribution', amount:5000, period:'February 2025', note:'', date:'2025-02-05' },
-  { id:5, ref:'TX-2025-005', memberId:4, type:'contribution', amount:5000, period:'February 2025', note:'', date:'2025-02-05' },
-  { id:6, ref:'TX-2025-006', memberId:3, type:'repayment', amount:15000, period:'February 2025', note:'Partial repay', date:'2025-02-15' },
-  { id:7, ref:'TX-2025-007', memberId:5, type:'loan', amount:80000, period:'February 2025', note:'Emergency loan', date:'2025-02-20' },
-  { id:8, ref:'TX-2025-008', memberId:2, type:'contribution', amount:5000, period:'March 2025', note:'', date:'2025-03-04' },
-  { id:9, ref:'TX-2025-009', memberId:6, type:'contribution', amount:5000, period:'March 2025', note:'', date:'2025-03-04' },
-  { id:10, ref:'TX-2025-010', memberId:7, type:'contribution', amount:5000, period:'March 2025', note:'', date:'2025-03-04' },
-  { id:11, ref:'TX-2025-011', memberId:3, type:'repayment', amount:15000, period:'March 2025', note:'', date:'2025-03-14' },
-  { id:12, ref:'TX-2025-012', memberId:5, type:'penalty', amount:2000, period:'March 2025', note:'Late payment', date:'2025-03-20' },
-  { id:13, ref:'TX-2025-013', memberId:1, type:'contribution', amount:5000, period:'April 2025', note:'', date:'2025-04-02' },
-  { id:14, ref:'TX-2025-014', memberId:9, type:'contribution', amount:5000, period:'April 2025', note:'', date:'2025-04-02' },
-  { id:15, ref:'TX-2025-015', memberId:4, type:'loan', amount:200000, period:'April 2025', note:'Equipment purchase', date:'2025-04-08' },
-  { id:16, ref:'TX-2025-016', memberId:5, type:'repayment', amount:10000, period:'April 2025', note:'', date:'2025-04-10' },
-  { id:17, ref:'TX-2025-017', memberId:2, type:'withdrawal', amount:8000, period:'April 2025', note:'Approved withdrawal', date:'2025-04-15' },
-];
 
 // ─── DATA STORE ───────────────────────────────────────────────
 const DATA = {
