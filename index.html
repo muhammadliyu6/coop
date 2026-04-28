@@ -1309,13 +1309,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAW480qh_RvrV-NDWoq1aT-oGr8SVm2ZHY",
@@ -1323,23 +1317,61 @@ document.addEventListener('DOMContentLoaded',()=>{
     projectId: "coop-01",
     storageBucket: "coop-01.firebasestorage.app",
     messagingSenderId: "771709561383",
-    appId: "1:771709561383:web:b578f76307b22bfab4fc02",
-    measurementId: "G-GP14VR52JW"
+    appId: "1:771709561383:web:b578f76307b22bfab4fc02"
   };
 
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
   const db = getFirestore(app);
 
-  // Make Firebase available globally
-  window.firebaseDB = db;
-  window.firebaseHelpers = {
-    collection,
-    addDoc,
-    getDocs
+  // Sync Members Real-time
+  onSnapshot(collection(db, "members"), (snapshot) => {
+    window.members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderMembers();
+    updateStats();
+  });
+
+  // Sync Transactions Real-time
+  const q = query(collection(db, "transactions"), orderBy("date", "desc"));
+  onSnapshot(q, (snapshot) => {
+    window.transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderTxTable();
+    updateStats();
+  });
+
+  // Export Save function to Global Window
+  window.saveToFirebase = async (col, data) => {
+    try {
+      await addDoc(collection(db, col), { ...data, date: serverTimestamp() });
+      showToast("Cloud Synced", "success");
+    } catch (e) {
+      showToast("Sync Failed", "error");
+    }
+  };
+</script>
+</head>
+<body>
+
+<script>
+// 2. REPLACING LOCAL STORAGE LOGIC
+// Instead of the old saveToLocal() function, we now use:
+
+async function handleRecordTransaction(e) {
+  e.preventDefault();
+  const formData = {
+    memberId: document.getElementById('tx-member').value,
+    type: document.getElementById('tx-type').value,
+    amount: parseFloat(document.getElementById('tx-amount').value),
+    note: document.getElementById('tx-note').value
   };
 
-  console.log("Firebase connected successfully");
+  // CALL FIREBASE INSTEAD OF LOCALSTORAGE
+  await window.saveToFirebase("transactions", formData);
+  closeModal();
+}
+
+// REMOVE THESE FUNCTIONS FROM YOUR ORIGINAL CODE:
+// function saveToLocal() { ... } 
+// function loadFromLocal() { ... }
 </script>
 
 </body>
