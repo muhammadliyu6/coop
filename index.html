@@ -771,43 +771,135 @@ button { cursor: pointer; font-family: var(--font); }
 <!-- Toast Container -->
 <div class="toast-wrap" id="toast-wrap"></div>
 
-<script>
+<script type="module">
+// ─── FIREBASE IMPORTS ───────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  updateDoc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAEq8MPkrzDW2jzznqWmSjNErAjeGKSjPo",
+  authDomain: "coop-00.firebaseapp.com",
+  projectId: "coop-00",
+  storageBucket: "coop-00.firebasestorage.app",
+  messagingSenderId: "218400132225",
+  appId: "1:218400132225:web:1cbf420abca000c8095180",
+  measurementId: "G-D359FLE1P4"
+};
+
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
+
+// ─── DEFAULT SEED DATA ────────────────────────────────────────
+const DEFAULT_MEMBERS = [
+  { id:1, code:'MEM-0001', name:'Adaeze Okonkwo', phone:'+234 801 234 5678', email:'adaeze@mail.com', status:'active', joined:'2023-01-15', photo:null },
+  { id:2, code:'MEM-0002', name:'Emeka Nwosu', phone:'+234 802 345 6789', email:'emeka@mail.com', status:'active', joined:'2023-01-15', photo:null },
+  { id:3, code:'MEM-0003', name:'Fatima Aliyu', phone:'+234 803 456 7890', email:'fatima@mail.com', status:'active', joined:'2023-02-01', photo:null },
+  { id:4, code:'MEM-0004', name:'Chukwuemeka Eze', phone:'+234 804 567 8901', email:'chukwu@mail.com', status:'active', joined:'2023-02-14', photo:null },
+  { id:5, code:'MEM-0005', name:'Ngozi Obi', phone:'+234 805 678 9012', email:'ngozi@mail.com', status:'inactive', joined:'2023-03-01', photo:null },
+  { id:6, code:'MEM-0006', name:'Babatunde Lawal', phone:'+234 806 789 0123', email:'tunde@mail.com', status:'active', joined:'2023-03-10', photo:null },
+  { id:7, code:'MEM-0007', name:'Amina Mohammed', phone:'+234 807 890 1234', email:'amina@mail.com', status:'active', joined:'2023-04-05', photo:null },
+  { id:8, code:'MEM-0008', name:'Olusegun Adeleke', phone:'+234 808 901 2345', email:'segun@mail.com', status:'suspended', joined:'2023-04-20', photo:null },
+  { id:9, code:'MEM-0009', name:'Chidinma Okeke', phone:'+234 809 012 3456', email:'chidi@mail.com', status:'active', joined:'2023-05-01', photo:null },
+];
+
+const DEFAULT_TRANSACTIONS = [
+  { id:1, ref:'TX-2025-001', memberId:1, type:'contribution', amount:5000, period:'January 2025', note:'', date:'2025-01-05' },
+  { id:2, ref:'TX-2025-002', memberId:2, type:'contribution', amount:5000, period:'January 2025', note:'', date:'2025-01-05' },
+  { id:3, ref:'TX-2025-003', memberId:3, type:'loan', amount:150000, period:'January 2025', note:'Business loan', date:'2025-01-10' },
+  { id:4, ref:'TX-2025-004', memberId:1, type:'contribution', amount:5000, period:'February 2025', note:'', date:'2025-02-05' },
+  { id:5, ref:'TX-2025-005', memberId:4, type:'contribution', amount:5000, period:'February 2025', note:'', date:'2025-02-05' },
+  { id:6, ref:'TX-2025-006', memberId:3, type:'repayment', amount:15000, period:'February 2025', note:'Partial repay', date:'2025-02-15' },
+  { id:7, ref:'TX-2025-007', memberId:5, type:'loan', amount:80000, period:'February 2025', note:'Emergency loan', date:'2025-02-20' },
+  { id:8, ref:'TX-2025-008', memberId:2, type:'contribution', amount:5000, period:'March 2025', note:'', date:'2025-03-04' },
+  { id:9, ref:'TX-2025-009', memberId:6, type:'contribution', amount:5000, period:'March 2025', note:'', date:'2025-03-04' },
+  { id:10, ref:'TX-2025-010', memberId:7, type:'contribution', amount:5000, period:'March 2025', note:'', date:'2025-03-04' },
+  { id:11, ref:'TX-2025-011', memberId:3, type:'repayment', amount:15000, period:'March 2025', note:'', date:'2025-03-14' },
+  { id:12, ref:'TX-2025-012', memberId:5, type:'penalty', amount:2000, period:'March 2025', note:'Late payment', date:'2025-03-20' },
+  { id:13, ref:'TX-2025-013', memberId:1, type:'contribution', amount:5000, period:'April 2025', note:'', date:'2025-04-02' },
+  { id:14, ref:'TX-2025-014', memberId:9, type:'contribution', amount:5000, period:'April 2025', note:'', date:'2025-04-02' },
+  { id:15, ref:'TX-2025-015', memberId:4, type:'loan', amount:200000, period:'April 2025', note:'Equipment purchase', date:'2025-04-08' },
+  { id:16, ref:'TX-2025-016', memberId:5, type:'repayment', amount:10000, period:'April 2025', note:'', date:'2025-04-10' },
+  { id:17, ref:'TX-2025-017', memberId:2, type:'withdrawal', amount:8000, period:'April 2025', note:'Approved withdrawal', date:'2025-04-15' },
+];
+
 // ─── DATA STORE ───────────────────────────────────────────────
 const DATA = {
-  members: [
-    { id:1, code:'MEM-0001', name:'Adaeze Okonkwo', phone:'+234 801 234 5678', email:'adaeze@mail.com', status:'active', joined:'2023-01-15', photo:null },
-    { id:2, code:'MEM-0002', name:'Emeka Nwosu', phone:'+234 802 345 6789', email:'emeka@mail.com', status:'active', joined:'2023-01-15', photo:null },
-    { id:3, code:'MEM-0003', name:'Fatima Aliyu', phone:'+234 803 456 7890', email:'fatima@mail.com', status:'active', joined:'2023-02-01', photo:null },
-    { id:4, code:'MEM-0004', name:'Chukwuemeka Eze', phone:'+234 804 567 8901', email:'chukwu@mail.com', status:'active', joined:'2023-02-14', photo:null },
-    { id:5, code:'MEM-0005', name:'Ngozi Obi', phone:'+234 805 678 9012', email:'ngozi@mail.com', status:'inactive', joined:'2023-03-01', photo:null },
-    { id:6, code:'MEM-0006', name:'Babatunde Lawal', phone:'+234 806 789 0123', email:'tunde@mail.com', status:'active', joined:'2023-03-10', photo:null },
-    { id:7, code:'MEM-0007', name:'Amina Mohammed', phone:'+234 807 890 1234', email:'amina@mail.com', status:'active', joined:'2023-04-05', photo:null },
-    { id:8, code:'MEM-0008', name:'Olusegun Adeleke', phone:'+234 808 901 2345', email:'segun@mail.com', status:'suspended', joined:'2023-04-20', photo:null },
-    { id:9, code:'MEM-0009', name:'Chidinma Okeke', phone:'+234 809 012 3456', email:'chidi@mail.com', status:'active', joined:'2023-05-01', photo:null },
-  ],
-  transactions: [
-    { id:1, ref:'TX-2025-001', memberId:1, type:'contribution', amount:5000, period:'January 2025', note:'', date:'2025-01-05' },
-    { id:2, ref:'TX-2025-002', memberId:2, type:'contribution', amount:5000, period:'January 2025', note:'', date:'2025-01-05' },
-    { id:3, ref:'TX-2025-003', memberId:3, type:'loan', amount:150000, period:'January 2025', note:'Business loan', date:'2025-01-10' },
-    { id:4, ref:'TX-2025-004', memberId:1, type:'contribution', amount:5000, period:'February 2025', note:'', date:'2025-02-05' },
-    { id:5, ref:'TX-2025-005', memberId:4, type:'contribution', amount:5000, period:'February 2025', note:'', date:'2025-02-05' },
-    { id:6, ref:'TX-2025-006', memberId:3, type:'repayment', amount:15000, period:'February 2025', note:'Partial repay', date:'2025-02-15' },
-    { id:7, ref:'TX-2025-007', memberId:5, type:'loan', amount:80000, period:'February 2025', note:'Emergency loan', date:'2025-02-20' },
-    { id:8, ref:'TX-2025-008', memberId:2, type:'contribution', amount:5000, period:'March 2025', note:'', date:'2025-03-04' },
-    { id:9, ref:'TX-2025-009', memberId:6, type:'contribution', amount:5000, period:'March 2025', note:'', date:'2025-03-04' },
-    { id:10, ref:'TX-2025-010', memberId:7, type:'contribution', amount:5000, period:'March 2025', note:'', date:'2025-03-04' },
-    { id:11, ref:'TX-2025-011', memberId:3, type:'repayment', amount:15000, period:'March 2025', note:'', date:'2025-03-14' },
-    { id:12, ref:'TX-2025-012', memberId:5, type:'penalty', amount:2000, period:'March 2025', note:'Late payment', date:'2025-03-20' },
-    { id:13, ref:'TX-2025-013', memberId:1, type:'contribution', amount:5000, period:'April 2025', note:'', date:'2025-04-02' },
-    { id:14, ref:'TX-2025-014', memberId:9, type:'contribution', amount:5000, period:'April 2025', note:'', date:'2025-04-02' },
-    { id:15, ref:'TX-2025-015', memberId:4, type:'loan', amount:200000, period:'April 2025', note:'Equipment purchase', date:'2025-04-08' },
-    { id:16, ref:'TX-2025-016', memberId:5, type:'repayment', amount:10000, period:'April 2025', note:'', date:'2025-04-10' },
-    { id:17, ref:'TX-2025-017', memberId:2, type:'withdrawal', amount:8000, period:'April 2025', note:'Approved withdrawal', date:'2025-04-15' },
-  ],
+  members: [],
+  transactions: [],
   nextMemberId: 10,
   nextTxId: 18,
   calcType: 'reducing'
 };
+
+// ─── FIRESTORE HELPERS ────────────────────────────────────────
+async function loadFromFirestore() {
+  try {
+    const membersSnap = await getDocs(collection(db, 'members'));
+    const txSnap = await getDocs(collection(db, 'transactions'));
+    const configSnap = await getDoc(doc(db, 'config', 'counters'));
+
+    if (membersSnap.empty && txSnap.empty) {
+      // Seed Firestore with default data
+      for (const m of DEFAULT_MEMBERS) {
+        await setDoc(doc(db, 'members', String(m.id)), m);
+      }
+      for (const t of DEFAULT_TRANSACTIONS) {
+        await setDoc(doc(db, 'transactions', String(t.id)), t);
+      }
+      await setDoc(doc(db, 'config', 'counters'), { nextMemberId: 10, nextTxId: 18 });
+      DATA.members = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+      DATA.transactions = JSON.parse(JSON.stringify(DEFAULT_TRANSACTIONS));
+      DATA.nextMemberId = 10;
+      DATA.nextTxId = 18;
+    } else {
+      DATA.members = membersSnap.docs.map(d => d.data());
+      DATA.transactions = txSnap.docs.map(d => d.data());
+      if (configSnap.exists()) {
+        const c = configSnap.data();
+        DATA.nextMemberId = c.nextMemberId || 10;
+        DATA.nextTxId = c.nextTxId || 18;
+      } else {
+        DATA.nextMemberId = Math.max(0, ...DATA.members.map(m => m.id || 0)) + 1;
+        DATA.nextTxId = Math.max(0, ...DATA.transactions.map(t => t.id || 0)) + 1;
+      }
+    }
+  } catch (err) {
+    console.error('Firestore load failed, using defaults:', err);
+    DATA.members = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+    DATA.transactions = JSON.parse(JSON.stringify(DEFAULT_TRANSACTIONS));
+    DATA.nextMemberId = 10;
+    DATA.nextTxId = 18;
+  }
+}
+
+async function saveMemberFirestore(member) {
+  await setDoc(doc(db, 'members', String(member.id)), member);
+}
+
+async function saveTransactionFirestore(tx) {
+  await setDoc(doc(db, 'transactions', String(tx.id)), tx);
+}
+
+async function updateCounters() {
+  await setDoc(doc(db, 'config', 'counters'), {
+    nextMemberId: DATA.nextMemberId,
+    nextTxId: DATA.nextTxId
+  });
+}
+
+async function updateMemberFirestore(id, updates) {
+  await updateDoc(doc(db, 'members', String(id)), updates);
+}
 
 // ─── HELPERS ─────────────────────────────────────────────────
 const fmt = n => '₦' + Math.round(n).toLocaleString();
@@ -1097,13 +1189,18 @@ function triggerPhotoUpload(e, id) {
   document.getElementById('photo-'+id)?.click();
 }
 
-function uploadMemberPhoto(e, id) {
+async function uploadMemberPhoto(e, id) {
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = ev => {
+  reader.onload = async ev => {
     const m = getMember(id);
-    if(m) { m.photo = ev.target.result; renderMembers(); showToast(`Photo updated for ${m.name}!`, 'success'); }
+    if(m) {
+      m.photo = ev.target.result;
+      await updateMemberFirestore(id, { photo: m.photo });
+      renderMembers();
+      showToast(`Photo updated for ${m.name}!`, 'success');
+    }
   };
   reader.readAsDataURL(file);
 }
@@ -1219,26 +1316,38 @@ function openTxModal() {
 }
 function closeTxModal() { document.getElementById('tx-modal').classList.remove('open'); }
 
-function recordTx() {
+async function recordTx() {
   const memberId = parseInt(document.getElementById('tx-member').value);
   const type = document.getElementById('tx-type').value;
   const amount = parseFloat(document.getElementById('tx-amount-inp').value);
   const period = document.getElementById('tx-period').value.trim();
   if(!memberId || !amount || !period) { showToast('Please fill all required fields', 'error'); return; }
   const ref = 'TX-'+Date.now();
-  await window.saveTransactionToFirebase({
-  memberId,
-  type,
-  amount,
-  period,
-  note,
-  date: new Date().toISOString()
-});
-  closeTxModal();
-  renderDashboard();
-  showToast('Transaction recorded: '+ref, 'success');
-  document.getElementById('tx-amount-inp').value='';
-  document.getElementById('tx-note').value='';
+  const newTx = {
+    id: DATA.nextTxId,
+    ref,
+    memberId,
+    type,
+    amount,
+    period,
+    note: document.getElementById('tx-note').value || '',
+    date: new Date().toISOString().slice(0,10)
+  };
+  try {
+    await saveTransactionFirestore(newTx);
+    DATA.transactions.push(newTx);
+    DATA.nextTxId++;
+    await updateCounters();
+    closeTxModal();
+    renderDashboard();
+    if(document.getElementById('view-transactions').style.display !== 'none') renderTxTable();
+    showToast('Transaction recorded: ' + ref, 'success');
+    document.getElementById('tx-amount-inp').value='';
+    document.getElementById('tx-note').value='';
+  } catch(err) {
+    console.error(err);
+    showToast('Failed to save transaction', 'error');
+  }
 }
 
 function openAddMemberModal() {
@@ -1257,24 +1366,36 @@ function previewPhoto(e) {
   reader.readAsDataURL(file);
 }
 
-function addMember() {
+async function addMember() {
   const name = document.getElementById('new-member-name').value.trim();
   if(!name) { showToast('Name is required','error'); return; }
   const code = 'MEM-'+String(DATA.nextMemberId).padStart(4,'0');
-  await window.saveMemberToFirebase({
-  name,
-  phone,
-  email,
-  status,
-  joined,
-  address
-});
-  document._pendingPhoto = null;
-  document.getElementById('add-member-modal').classList.remove('open');
-  document.getElementById('new-member-name').value='';
-  document.getElementById('new-member-avatar-preview').innerHTML = '<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--text3)"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>';
-  renderMembers(); renderDashboard();
-  showToast(`${name} added as ${code}!`, 'success');
+  const newMember = {
+    id: DATA.nextMemberId,
+    code,
+    name,
+    phone: document.getElementById('new-member-phone').value,
+    email: document.getElementById('new-member-email').value,
+    status: document.getElementById('new-member-status').value,
+    joined: document.getElementById('new-member-joined').value,
+    photo: document._pendingPhoto || null
+  };
+  try {
+    await saveMemberFirestore(newMember);
+    DATA.members.push(newMember);
+    DATA.nextMemberId++;
+    await updateCounters();
+    document._pendingPhoto = null;
+    document.getElementById('add-member-modal').classList.remove('open');
+    document.getElementById('new-member-name').value='';
+    document.getElementById('new-member-avatar-preview').innerHTML = '<svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--text3)"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>';
+    renderMembers();
+    renderDashboard();
+    showToast(`${name} added as ${code}!`, 'success');
+  } catch(err) {
+    console.error(err);
+    showToast('Failed to save member', 'error');
+  }
 }
 
 // ─── NAVIGATION ──────────────────────────────────────────────
@@ -1306,256 +1427,20 @@ function toggleTheme() {
 }
 
 // ─── INIT ────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded', async ()=>{
   document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-NG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.querySelectorAll('.modal-backdrop').forEach(el=>el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+  await loadFromFirestore();
   renderDashboard();
   setTimeout(refreshInsights, 800);
 });
-</script>
 
-<script type="module">
-
-// Firebase SDKs
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
-
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-
-
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyAEq8MPkrzDW2jzznqWmSjNErAjeGKSjPo",
-  authDomain: "coop-00.firebaseapp.com",
-  projectId: "coop-00",
-  storageBucket: "coop-00.firebasestorage.app",
-  messagingSenderId: "218400132225",
-  appId: "1:218400132225:web:1cbf420abca000c8095180",
-  measurementId: "G-D359FLE1P4"
-};
-
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-const analytics = getAnalytics(app);
-
-
-// Initialize Firestore
-const db = getFirestore(app);
-
-console.log("Firestore Connected");
-
-
-// ===============================
-// SAVE MEMBER TO FIRESTORE
-// ===============================
-
-async function saveMemberToFirebase(memberData) {
-
-  try {
-
-    const docRef = await addDoc(
-      collection(db, "members"),
-      memberData
-    );
-
-    console.log("Member saved:", docRef.id);
-
-    return docRef.id;
-
-  } catch (error) {
-
-    console.error("Error saving member:", error);
-
-  }
-
-}
-
-
-// ===============================
-// SAVE TRANSACTION TO FIRESTORE
-// ===============================
-
-async function saveTransactionToFirebase(txData) {
-
-  try {
-
-    const docRef = await addDoc(
-      collection(db, "transactions"),
-      txData
-    );
-
-    console.log("Transaction saved:", docRef.id);
-
-    return docRef.id;
-
-  } catch (error) {
-
-    console.error("Error saving transaction:", error);
-
-  }
-
-}
-
-
-// ===============================
-// LOAD MEMBERS FROM FIRESTORE
-// ===============================
-
-async function loadMembersFromFirebase() {
-
-  try {
-
-    const querySnapshot = await getDocs(
-      collection(db, "members")
-    );
-
-    querySnapshot.forEach((doc) => {
-
-      console.log(doc.id, doc.data());
-
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-  }
-
-}
-
-
-// ===============================
-// REPLACE addMember()
-// ===============================
-
-window.addMember = async function () {
-
-  const name =
-    document.getElementById("new-member-name").value;
-
-  const phone =
-    document.getElementById("new-member-phone").value;
-
-  const email =
-    document.getElementById("new-member-email").value;
-
-  const joined =
-    document.getElementById("new-member-joined").value;
-
-  const status =
-    document.getElementById("new-member-status").value;
-
-  const address =
-    document.getElementById("new-member-address").value;
-
-
-  if (!name) {
-
-    alert("Enter member name");
-
-    return;
-
-  }
-
-
-  const memberData = {
-
-    name: name,
-
-    phone: phone,
-
-    email: email,
-
-    joined: joined,
-
-    status: status,
-
-    address: address,
-
-    createdAt: new Date().toISOString()
-
-  };
-
-
-  await saveMemberToFirebase(memberData);
-
-
-  alert("Member Added Successfully");
-
-};
-
-
-// ===============================
-// REPLACE recordTx()
-// ===============================
-
-window.recordTx = async function () {
-
-  const memberId =
-    document.getElementById("tx-member").value;
-
-  const type =
-    document.getElementById("tx-type").value;
-
-  const amount =
-    document.getElementById("tx-amount-inp").value;
-
-  const period =
-    document.getElementById("tx-period").value;
-
-  const note =
-    document.getElementById("tx-note").value;
-
-
-  if (!memberId || !amount) {
-
-    alert("Fill all required fields");
-
-    return;
-
-  }
-
-
-  const txData = {
-
-    memberId: memberId,
-
-    type: type,
-
-    amount: Number(amount),
-
-    period: period,
-
-    note: note,
-
-    date: new Date().toISOString()
-
-  };
-
-
-  await saveTransactionToFirebase(txData);
-
-
-  alert("Transaction Saved Successfully");
-
-};
-
-
-// ===============================
-// TEST FIREBASE CONNECTION
-// ===============================
-
-loadMembersFromFirebase();
-
-</script>
-
-</body>
+// ─── EXPOSE TO WINDOW ───────────────────────────────────────
+Object.assign(window, {
+  showView, openTxModal, closeTxModal, recordTx, renderDashboard,
+  openAddMemberModal, addMember, previewPhoto, filterMembers, filterTx,
+  updateCalc, setCalcType, openAI, refreshInsights, toggleTheme,
+  triggerPhotoUpload, uploadMemberPhoto, showMemberDetail
+});
+</script></body>
 </html>
